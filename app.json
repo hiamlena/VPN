@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "VPN Assistant",
+    "slug": "vpn-assistant",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "vpnassistant",
+    "userInterfaceStyle": "automatic",
+    "platforms": ["ios", "android"],
+    "android": {
+      "package": "com.company.vpnassistant"
+    },
+    "ios": {
+      "bundleIdentifier": "com.company.vpnassistant"
+    }
+  }
+}

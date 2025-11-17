@@ -1,31 +1,20 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ESNext",
     "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
+    "lib": ["ESNext"],
+    "jsx": "react-native",
+    "moduleResolution": "Bundler",
+    "allowJs": false,
     "strict": true,
     "noImplicitAny": true,
     "noFallthroughCasesInSwitch": true,
-    "useDefineForClassFields": false,
     "skipLibCheck": true,
     "noEmit": true,
-    "moduleDetection": "force",
-    "types": ["node"],
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": ["./*"],
-      "@components/*": ["components/*"],
-      "@modules/*": ["modules/*"],
-      "@pages/*": ["pages/*"],
-      "@services/*": ["services/*"],
-      "@hooks/*": ["hooks/*"],
-      "@utils/*": ["utils/*"],
-      "@styles/*": ["styles/*"],
-      "@types/*": ["types/*"]
-    }
+    "resolveJsonModule": true,
+    "types": ["react", "react-native"],
+    "baseUrl": "./src"
   },
-  "include": ["src"],
+  "include": ["App.tsx", "src"],
   "exclude": ["node_modules", "dist"]
 }

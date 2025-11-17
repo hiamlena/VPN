@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Яндекс.Карта — проверка загрузки API</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f5f5;
+        --fg: #0f172a;
+        --panel: #ffffff;
+        --muted: #475569;
+        --border: #e2e8f0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      header {
+        padding: 16px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      main {
+        flex: 1;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 12px;
+        padding: 0 16px 16px;
+      }
+
+      .panel {
+        padding: 12px 14px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        color: var(--muted);
+      }
+
+      .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #cbd5e1;
+      }
+
+      .status-dot.ok {
+        background: #22c55e;
+      }
+
+      .status-dot.warn {
+        background: #f97316;
+      }
+
+      .status-dot.err {
+        background: #ef4444;
+      }
+
+      .hints {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .map-wrapper {
+        min-height: 460px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        background: #e2e8f0;
+      }
+
+      #map {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Проверка карты (Yandex Maps API)</h1>
+    </header>
+    <main>
+      <section class="panel">
+        <div id="status" class="status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Готовимся к загрузке скрипта карт...</span>
+        </div>
+        <div class="hints" id="status-hints"></div>
+      </section>
+      <section class="map-wrapper panel">
+        <div id="map"></div>
+      </section>
+    </main>
+
+    <script>
+      const MAP_API_URL =
+        'https://api-maps.yandex.ru/3.0/?apikey=ВАШ_API_KEY&lang=ru_RU';
+
+      const statusText = document.getElementById('status-text');
+      const statusDot = document.getElementById('status-dot');
+      const statusHints = document.getElementById('status-hints');
+
+      const setStatus = (text, tone = 'warn', hints = '') => {
+        statusText.textContent = text;
+        statusDot.className = `status-dot ${tone}`;
+        statusHints.innerHTML = hints;
+      };
+
+      const loadYandexApi = () =>
+        new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = MAP_API_URL;
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(
+              new Error(
+                'Скрипт API не загрузился. Возможны проблемы с сетью или CSP.',
+              ),
+            );
+          document.head.appendChild(script);
+        });
+
+      const suggestCspFix = () =>
+        `Проверьте директивы Content-Security-Policy: добавьте <code>https://api-maps.yandex.ru</code> и <code>https://yastatic.net</code> в <code>script-src</code> / <code>script-src-elem</code>.`;
+
+      const handleGlobalErrors = (event) => {
+        const msg = event?.message || '';
+        if (msg.toLowerCase().includes('ymaps') || msg.includes('bundle')) {
+          setStatus(
+            'Ошибка инициализации Yandex Maps API',
+            'err',
+            `${msg}<br />${suggestCspFix()}`,
+          );
+        }
+      };
+
+      window.addEventListener('error', handleGlobalErrors);
+      window.addEventListener('unhandledrejection', (event) => {
+        const reason = event?.reason?.message || '';
+        if (reason && reason.toLowerCase().includes('ymaps')) {
+          setStatus(
+            'API вернуло ошибку. Проверьте конфигурацию.',
+            'err',
+            `${reason}<br />${suggestCspFix()}`,
+          );
+        }
+      });
+
+      const initMap = async () => {
+        try {
+          setStatus('Загружаем скрипт Yandex Maps...', 'warn');
+          await loadYandexApi();
+
+          if (!window.ymaps3) {
+            throw new Error(
+              'Yandex Maps API не доступен в глобальной области. Возможно, скрипт заблокирован CSP.',
+            );
+          }
+
+          await window.ymaps3.ready;
+          const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer } =
+            window.ymaps3;
+
+          const map = new YMap(document.getElementById('map'), {
+            location: {
+              center: [37.6178, 55.7517],
+              zoom: 10,
+            },
+            mode: 'vector',
+          });
+
+          map.addChild(new YMapDefaultSchemeLayer());
+          map.addChild(new YMapDefaultFeaturesLayer());
+
+          setStatus('Карта успешно загружена', 'ok');
+        } catch (error) {
+          console.error(error);
+          setStatus(
+            'Не удалось загрузить карту',
+            'err',
+            `${error.message}<br />${suggestCspFix()}`,
+          );
+        }
+      };
+
+      initMap();
+    </script>
+  </body>
+</html>
