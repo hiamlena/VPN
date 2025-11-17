@@ -1,0 +1,5 @@
+
+{
+  "name": "Corporate VPN Deployment Assistant",
+  "description": "An application that generates a comprehensive deployment plan for a corporate VPN using WireGuard, tailored for transport companies. It provides architecture details, server requirements, deployment steps, and user guides."
+}
